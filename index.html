@@ -77,6 +77,14 @@ pre.raw-json{padding:12px;background:#f4f4f4;border-radius:6px;font-size:11px;ov
 .error-card h3{margin-bottom:6px}
 .btn-action{padding:7px 14px;border:1px solid #4a90e2;color:#4a90e2;background:#fff;border-radius:6px;cursor:pointer;font-size:13px;margin-left:6px}
 .btn-action:hover{background:#eaf2ff}
+.history-stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.stat-chip{padding:6px 12px;border-radius:999px;font-size:12px;border:1px solid #ddd;background:#f8f9fa}
+.history-list{display:flex;flex-direction:column;gap:8px}
+.history-item{border:1px solid #eee;border-radius:8px;padding:10px 12px;background:#fafafa}
+.history-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.history-name{font-size:13px;font-weight:600;word-break:break-all}
+.history-meta{font-size:11px;color:#888}
+.history-summary{margin-top:6px;font-size:13px;color:#555;line-height:1.5}
 </style>
 </head>
 <body>
@@ -87,48 +95,19 @@ pre.raw-json{padding:12px;background:#f4f4f4;border-radius:6px;font-size:11px;ov
   </header>
 
   <div class="config-box">
-    <div class="config-title">🔑 选择 AI 服务并填入 API Key</div>
-    <div class="backend-btns">
-      <button class="btn-backend active" id="btnSF" onclick="setBackend('siliconflow')">🆓 硅基流动（免费）</button>
-      <button class="btn-backend" id="btnClaude" onclick="setBackend('claude')">☁️ Claude API</button>
-    </div>
+    <div class="config-title">🔑 填写 API Base URL 和 API Key</div>
 
-    <div id="sfConfig">
-      <div class="input-row">
-        <input type="password" id="sfKey" class="apikey-input" placeholder="填入硅基流动 API Key（sk-...）" autocomplete="off">
-        <button class="btn-small" onclick="toggleKey('sfKey',this)">显示</button>
+    <div id="claudeConfig">
+      <div style="margin-bottom:10px">
+        <label style="font-size:12px;color:#666;display:block;margin-bottom:3px">🌐 API Base URL</label>
+        <input type="text" id="apiBaseUrl" class="apikey-input" placeholder="例如：https://one.iflytek.com 或 https://api.anthropic.com" autocomplete="off">
       </div>
-      <div class="model-row">
-        <div class="model-col">
-          <label>📝 文字审核模型</label>
-          <select id="sfTextModel">
-            <option value="deepseek-ai/DeepSeek-V3">DeepSeek-V3（推荐，快）</option>
-            <option value="Qwen/Qwen2.5-72B-Instruct">Qwen2.5-72B（最强，慢）</option>
-            <option value="Qwen/Qwen2.5-32B-Instruct">Qwen2.5-32B（平衡）</option>
-            <option value="Qwen/Qwen2.5-14B-Instruct">Qwen2.5-14B（较快）</option>
-            <option value="Qwen/Qwen2.5-7B-Instruct">Qwen2.5-7B（最快）</option>
-            <option value="deepseek-ai/DeepSeek-R1">DeepSeek-R1（推理强）</option>
-          </select>
-        </div>
-        <div class="model-col">
-          <label>🖼️ 图片审核模型</label>
-          <select id="sfVisionModel">
-            <option value="Pro/Qwen/Qwen2-VL-7B-Instruct">Qwen2-VL-7B Pro（推荐）</option>
-            <option value="Qwen/Qwen2-VL-72B-Instruct">Qwen2-VL-72B（最强）</option>
-            <option value="OpenGVLab/InternVL2_5-8B">InternVL2.5-8B（快速）</option>
-            <option value="OpenGVLab/InternVL2-26B">InternVL2-26B（高精度）</option>
-            <option value="Qwen/Qwen2-VL-7B-Instruct">Qwen2-VL-7B（最快）</option>
-          </select>
-        </div>
-      </div>
-      <p class="hint">免费注册：<a href="https://siliconflow.cn" target="_blank">siliconflow.cn</a>，注册即送免费额度</p>
-    </div>
 
-    <div id="claudeConfig" style="display:none">
       <div class="input-row">
-        <input type="password" id="claudeKey" class="apikey-input" placeholder="填入 Claude API Key" autocomplete="off">
+        <input type="password" id="claudeKey" class="apikey-input" placeholder="填入你的 API Key" autocomplete="off">
         <button class="btn-small" onclick="toggleKey('claudeKey',this)">显示</button>
       </div>
+
       <div style="margin-top:10px">
         <label style="font-size:12px;color:#666;display:block;margin-bottom:3px">🤖 Claude 模型</label>
         <select id="claudeModel">
@@ -138,10 +117,8 @@ pre.raw-json{padding:12px;background:#f4f4f4;border-radius:6px;font-size:11px;ov
           <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku（最快）</option>
         </select>
       </div>
-      <div class="proxy-notice" id="proxyNotice">
-        ⚠️ 使用 Claude API 需要先启动本地代理：<br>
-        在终端运行 <code>python proxy.py</code>（文件在项目目录中）
-      </div>
+
+      <p class="hint">每位小伙伴填写各自的 Base URL 和 Key 即可使用。输入会保存在浏览器本地。</p>
     </div>
   </div>
 
@@ -177,7 +154,7 @@ pre.raw-json{padding:12px;background:#f4f4f4;border-radius:6px;font-size:11px;ov
     <div class="result-header">
       <h2>📋 审核报告</h2>
       <div>
-        <button class="btn-action" id="downloadBtn">📄 下载报告</button>
+      <button class="btn-action" id="downloadBtn">📄 下载报告</button>
       </div>
     </div>
     <div class="verdict-card" id="verdictCard">
@@ -217,9 +194,19 @@ pre.raw-json{padding:12px;background:#f4f4f4;border-radius:6px;font-size:11px;ov
       <p id="errorMsg"></p>
     </div>
   </div>
+
+  <div class="result-section" id="historySection" style="margin-top:16px">
+    <div class="result-header">
+      <h2>📚 审核记录</h2>
+      <div>
+        <button class="btn-action" id="clearHistoryBtn">清空记录</button>
+      </div>
+    </div>
+    <div id="historyStats" class="history-stats"></div>
+    <div id="historyList" class="history-list"></div>
+  </div>
 </div>
 <script>
-const PROXY_URL = 'http://localhost:8787';
 const SYSTEM_PROMPT = `你是一位专业的教育内容审核专家，擅长审查试题、答案和解析的质量。
 请严格按照以下JSON格式输出，不要输出任何其他内容：
 
@@ -243,18 +230,9 @@ const SYSTEM_PROMPT = `你是一位专业的教育内容审核专家，擅长审
 }
 \`\`\``;
 
-let currentBackend = 'siliconflow';
 let selectedFiles = []; // [{file, dataUrl, type: 'image'|'docx', text: ''}]
 let lastResult = null;
-
-function setBackend(b) {
-  currentBackend = b;
-  document.getElementById('btnSF').classList.toggle('active', b === 'siliconflow');
-  document.getElementById('btnClaude').classList.toggle('active', b === 'claude');
-  document.getElementById('sfConfig').style.display = b === 'siliconflow' ? '' : 'none';
-  document.getElementById('claudeConfig').style.display = b === 'claude' ? '' : 'none';
-  document.getElementById('proxyNotice').style.display = b === 'claude' ? '' : 'none';
-}
+const HISTORY_KEY = 'content_review_history_v1';
 
 function toggleKey(id, btn) {
   const el = document.getElementById(id);
@@ -357,19 +335,22 @@ document.getElementById('reviewBtn').addEventListener('click', async () => {
   document.getElementById('errorSection').style.display = 'none';
 
   try {
-    // 合并 docx 文字到输入文字
     const docxTexts = selectedFiles.filter(f => f.type === 'docx').map(f => f.text).join('\n\n');
     const fullText = [text, docxTexts].filter(Boolean).join('\n\n');
     const imageFile = selectedFiles.find(f => f.type === 'image');
 
-    let result;
-    if (currentBackend === 'siliconflow') {
-      result = await reviewWithSiliconflow(fullText, imageFile ? imageFile.dataUrl : null);
-    } else {
-      result = await reviewWithClaude(fullText, imageFile ? imageFile.dataUrl : null);
-    }
+    const result = await reviewWithClaude(fullText, imageFile ? imageFile.dataUrl : null);
     lastResult = result;
     displayResults(result, imageFile ? imageFile.dataUrl : null);
+    appendHistory({
+      createdAt: Date.now(),
+      fileName: selectedFiles.map(f => f.name).join('、') || '纯文字输入',
+      summary: result.overall_summary || '',
+      verdict: result.overall_verdict || '未知',
+      issuesCount: countIssues(result),
+      raw: result
+    });
+    renderHistory();
   } catch (err) {
     console.error('审核失败:', err);
     showError(err.message || '请求失败，请检查 API Key 和网络连接');
@@ -378,41 +359,12 @@ document.getElementById('reviewBtn').addEventListener('click', async () => {
   }
 });
 
-async function reviewWithSiliconflow(text, imageDataUrl) {
-  const key = document.getElementById('sfKey').value.trim();
-  if (!key) throw new Error('请填入硅基流动 API Key');
-  const isImage = !!imageDataUrl;
-  const model = isImage ? document.getElementById('sfVisionModel').value : document.getElementById('sfTextModel').value;
-
-  let userContent;
-  if (isImage) {
-    const base64 = imageDataUrl.split(',')[1];
-    const mimeType = imageDataUrl.split(';')[0].split(':')[1];
-    userContent = [
-      { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64}` } },
-      { type: 'text', text: text ? `图片内容如上。另有文字内容：\n${text}\n\n请对以上内容进行全面审核，严格按JSON格式输出。` : '请对这张图片中的内容进行全面审核，严格按JSON格式输出。' }
-    ];
-  } else {
-    userContent = `请对以下文字内容进行全面审核，严格按JSON格式输出：\n\n${text}`;
-  }
-
-  const resp = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
-    body: JSON.stringify({ model, messages: [{ role: 'system', content: SYSTEM_PROMPT }, { role: 'user', content: userContent }], max_tokens: 4096, temperature: 0.1 })
-  });
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}));
-    throw new Error(`API 错误 ${resp.status}: ${err.message || err.error?.message || '请检查 API Key'}`);
-  }
-  const data = await resp.json();
-  return parseReviewResult(data.choices?.[0]?.message?.content || '');
-}
-
 async function reviewWithClaude(text, imageDataUrl) {
   const key = document.getElementById('claudeKey').value.trim();
-  if (!key) throw new Error('请填入 Claude API Key');
+  if (!key) throw new Error('请填入 API Key');
   const model = document.getElementById('claudeModel').value;
+  const apiBaseInput = document.getElementById('apiBaseUrl').value.trim();
+  const apiBase = (apiBaseInput || 'https://api.anthropic.com').replace(/\/+$/, '');
 
   let userContent;
   if (imageDataUrl) {
@@ -426,17 +378,19 @@ async function reviewWithClaude(text, imageDataUrl) {
     userContent = `请审核以下内容，严格按JSON格式输出：\n\n${text}`;
   }
 
-  const resp = await fetch(PROXY_URL, {
+  persistApiConfig();
+
+  const resp = await fetch(`${apiBase}/v1/messages`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
     body: JSON.stringify({ model, max_tokens: 4096, system: SYSTEM_PROMPT, messages: [{ role: 'user', content: userContent }] })
-  }).catch(err => {
-    throw new Error('无法连接本地代理（localhost:8787）。请先在终端运行：python proxy.py');
+  }).catch(() => {
+    throw new Error('无法连接 API Base URL，请检查地址、网络和公司代理权限');
   });
 
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({}));
-    throw new Error(`Claude API 错误 ${resp.status}: ${err.error?.message || '请检查 API Key'}`);
+    throw new Error(`API 错误 ${resp.status}: ${err.error?.message || err.message || '请检查 Key / Base URL'}`);
   }
   const data = await resp.json();
   return parseReviewResult(data.content?.[0]?.text || '');
@@ -505,6 +459,113 @@ function showError(msg) {
   document.getElementById('resultSection').style.display = 'none';
 }
 
+// ===== 本地存储 API 配置 =====
+function persistApiConfig() {
+  localStorage.setItem('cr_api_base', document.getElementById('apiBaseUrl').value.trim());
+  localStorage.setItem('cr_api_key', document.getElementById('claudeKey').value.trim());
+  localStorage.setItem('cr_model', document.getElementById('claudeModel').value);
+}
+
+function loadApiConfig() {
+  const base = localStorage.getItem('cr_api_base');
+  const key = localStorage.getItem('cr_api_key');
+  const model = localStorage.getItem('cr_model');
+  if (base) document.getElementById('apiBaseUrl').value = base;
+  if (key) document.getElementById('claudeKey').value = key;
+  if (model) document.getElementById('claudeModel').value = model;
+}
+
+// ===== 审核记录（localStorage） =====
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch { return []; }
+}
+
+function appendHistory(entry) {
+  const list = getHistory();
+  list.unshift(entry);
+  if (list.length > 200) list.length = 200;
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+}
+
+function countIssues(data) {
+  let n = 0;
+  const r = data.review || {};
+  if (r.typos?.found) n += (r.typos.details || []).length;
+  if (r.answer_correctness?.is_correct === false) n++;
+  if (r.explanation_correctness?.is_correct === false) n++;
+  if (r.consistency?.is_consistent === false) n++;
+  if (!r.content_safety?.is_safe) n += (r.content_safety?.issues || []).length;
+  return n;
+}
+
+function renderHistory() {
+  const list = getHistory();
+  const statsEl = document.getElementById('historyStats');
+  const listEl = document.getElementById('historyList');
+
+  const total = list.length;
+  const passed = list.filter(r => r.verdict && r.verdict.includes('通过') && !r.verdict.includes('不')).length;
+  const fix = list.filter(r => r.verdict && r.verdict.includes('修改')).length;
+  const fail = total - passed - fix;
+
+  statsEl.innerHTML = `
+    <span class="stat-chip">共 ${total} 条</span>
+    <span class="stat-chip" style="background:#d4edda;border-color:#c3e6cb">✅ 通过 ${passed}</span>
+    <span class="stat-chip" style="background:#fff3cd;border-color:#ffeeba">⚠️ 需修改 ${fix}</span>
+    <span class="stat-chip" style="background:#f8d7da;border-color:#f5c6cb">❌ 不通过 ${fail}</span>`;
+
+  if (list.length === 0) {
+    listEl.innerHTML = '<p style="color:#aaa;font-size:13px;padding:10px 0">暂无审核记录</p>';
+    return;
+  }
+
+  listEl.innerHTML = list.map((r, i) => {
+    const verdictClass = r.verdict && r.verdict.includes('通过') && !r.verdict.includes('不') ? 'verdict-pass'
+      : r.verdict && r.verdict.includes('修改') ? 'verdict-fix' : 'verdict-fail';
+    const time = new Date(r.createdAt).toLocaleString('zh-CN');
+    return `<div class="history-item">
+      <div class="history-top">
+        <div>
+          <div class="history-name">${escHtml(r.fileName)}</div>
+          <div class="history-meta">${time} · ${r.issuesCount} 个问题</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+          <span class="verdict-badge ${verdictClass}" style="font-size:12px;padding:3px 10px">${escHtml(r.verdict)}</span>
+          <button class="btn-small" onclick="viewHistoryDetail(${i})">查看</button>
+          <button class="btn-danger" onclick="deleteHistory(${i})">删除</button>
+        </div>
+      </div>
+      <div class="history-summary">${escHtml(r.summary)}</div>
+    </div>`;
+  }).join('');
+}
+
+function viewHistoryDetail(i) {
+  const r = getHistory()[i];
+  if (!r) return;
+  lastResult = r.raw;
+  displayResults(r.raw, null);
+  window.scrollTo({ top: document.getElementById('resultSection').offsetTop - 20, behavior: 'smooth' });
+}
+
+function deleteHistory(i) {
+  const list = getHistory();
+  list.splice(i, 1);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+  renderHistory();
+}
+
+document.getElementById('clearHistoryBtn').addEventListener('click', () => {
+  if (!confirm('确定清空所有审核记录？')) return;
+  localStorage.removeItem(HISTORY_KEY);
+  renderHistory();
+});
+
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 document.getElementById('downloadBtn').addEventListener('click', () => {
   if (!lastResult) return;
   const text = `内容审核报告\n${'='.repeat(40)}\n\n总体判定：${lastResult.overall_verdict}\n\n总体意见：${lastResult.overall_summary}\n\n${JSON.stringify(lastResult, null, 2)}`;
@@ -512,6 +573,10 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
   a.download = `审核报告_${new Date().toLocaleDateString('zh-CN')}.txt`; a.click();
 });
+
+// 初始化
+loadApiConfig();
+renderHistory();
 </script>
 </body>
 </html>
