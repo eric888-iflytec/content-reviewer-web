@@ -334,7 +334,8 @@ document.getElementById('reviewBtn').addEventListener('click', async () => {
     lastResult = result;
     displayResults(result);
   } catch (err) {
-    showError(err.message);
+    console.error('审核失败:', err);
+    showError(err.message || '网络请求失败，请检查：1) API Key是否正确 2) 网络连接是否正常 3) 浏览器控制台是否有CORS错误');
   } finally {
     btn.disabled = false; btnText.textContent = '开始审核';
   }
@@ -416,6 +417,9 @@ async function reviewWithClaude(text, imageDataUrl) {
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userContent }]
     })
+  }).catch(err => {
+    console.error('Fetch错误:', err);
+    throw new Error('网络请求失败: ' + err.message + '。可能原因：1) 网络连接问题 2) 浏览器CORS限制 3) API服务不可达');
   });
 
   if (!resp.ok) {
