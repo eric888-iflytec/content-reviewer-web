@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>内容审核系统</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f7fa;color:#333;min-height:100vh}
+.container{max-width:900px;margin:0 auto;padding:20px}
+header{text-align:center;padding:24px 0 16px}
+header h1{font-size:1.8rem;color:#2c3e50}
+header p{color:#666;margin-top:6px;font-size:14px}
+.config-box{background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.config-title{font-weight:600;font-size:15px;margin-bottom:12px;color:#2c3e50}
+.backend-btns{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.btn-backend{padding:7px 14px;border:2px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;transition:all .2s}
+.btn-backend.active{border-color:#4a90e2;background:#eaf2ff;color:#2c6fbd;font-weight:600}
+.input-row{display:flex;gap:8px;align-items:center}
+.apikey-input{flex:1;padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;outline:none}
+.apikey-input:focus{border-color:#4a90e2}
+.btn-small{padding:7px 12px;border:1px solid #ddd;border-radius:6px;background:#f8f9fa;cursor:pointer;font-size:13px;white-space:nowrap}
+.btn-small:hover{background:#e9ecef}
+.model-row{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+.model-col{flex:1;min-width:180px}
+.model-col label{font-size:12px;color:#666;display:block;margin-bottom:3px}
+select{width:100%;padding:6px 8px;border:1px solid #ddd;border-radius:6px;font-size:13px;background:#fff}
+.hint{font-size:12px;color:#888;margin-top:6px}
+.hint a{color:#4a90e2}
+.input-section{background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.rich-editor{min-height:100px;border:1px solid #ddd;border-radius:8px;padding:10px;font-size:14px;outline:none;line-height:1.6}
+.rich-editor:empty:before{content:attr(data-placeholder);color:#aaa;pointer-events:none}
+.rich-editor:focus{border-color:#4a90e2}
+.drop-zone{border:2px dashed #ccc;border-radius:10px;padding:28px;text-align:center;cursor:pointer;margin-top:12px;transition:all .2s}
+.drop-zone:hover,.drop-zone.drag-over{border-color:#4a90e2;background:#f0f7ff}
+.drop-icon{font-size:2rem;margin-bottom:8px}
+.preview-section{background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.preview-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.preview-grid{display:flex;flex-wrap:wrap;gap:10px}
+.preview-item{border:1px solid #eee;border-radius:8px;padding:8px;text-align:center;max-width:140px}
+.preview-item img{max-width:120px;max-height:100px;border-radius:4px}
+.preview-name{font-size:11px;color:#666;margin-top:4px;word-break:break-all}
+.preview-icon{font-size:2.5rem}
+.btn-primary{width:100%;padding:13px;background:#4a90e2;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;transition:background .2s;margin-bottom:16px}
+.btn-primary:hover{background:#357abd}
+.btn-primary:disabled{background:#aaa;cursor:not-allowed}
+.btn-danger{background:#fff;border:1px solid #e74c3c;color:#e74c3c;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px}
+.result-section{background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.result-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.result-header h2{font-size:1.2rem;color:#2c3e50}
+.verdict-card{border-radius:10px;padding:16px;margin-bottom:16px;background:#f8f9fa}
+.verdict-badge{display:inline-block;padding:6px 16px;border-radius:20px;font-weight:700;font-size:15px;margin-bottom:8px}
+.verdict-pass{background:#d4edda;color:#155724}
+.verdict-fix{background:#fff3cd;color:#856404}
+.verdict-fail{background:#f8d7da;color:#721c24}
+.verdict-summary{color:#555;font-size:14px;line-height:1.6}
+.content-layout{display:flex;gap:16px;flex-wrap:wrap}
+.content-panel,.issues-panel{flex:1;min-width:260px}
+.content-panel h3,.issues-panel h3{font-size:14px;font-weight:600;margin-bottom:10px;color:#2c3e50}
+.annotated-image{max-width:100%;border-radius:8px;border:1px solid #eee}
+.highlighted-content{font-size:14px;line-height:1.8;padding:10px;background:#fafafa;border-radius:8px;border:1px solid #eee}
+.issue-item{padding:10px;border-radius:8px;margin-bottom:8px;font-size:13px;line-height:1.5}
+.issue-error{background:#ffeaea;border-left:3px solid #e74c3c}
+.issue-warn{background:#fff8e1;border-left:3px solid #f39c12}
+.issue-info{background:#e8f4fd;border-left:3px solid #3498db}
+.issue-title{font-weight:600;margin-bottom:3px}
+details{margin-top:12px;border:1px solid #eee;border-radius:8px;overflow:hidden}
+summary{padding:10px 14px;cursor:pointer;font-size:13px;font-weight:600;background:#f8f9fa;user-select:none}
+.detail-content{padding:14px;font-size:13px;line-height:1.7}
+.detail-item{margin-bottom:12px}
+.detail-item h4{font-size:13px;color:#555;margin-bottom:4px}
+pre.raw-json{padding:12px;background:#f4f4f4;border-radius:6px;font-size:11px;overflow-x:auto;white-space:pre-wrap;word-break:break-all}
+.error-card{background:#ffeaea;border:1px solid #f5c6cb;border-radius:10px;padding:16px;color:#721c24}
+.error-card h3{margin-bottom:6px}
+.btn-action{padding:7px 14px;border:1px solid #4a90e2;color:#4a90e2;background:#fff;border-radius:6px;cursor:pointer;font-size:13px;margin-left:6px}
+.btn-action:hover{background:#eaf2ff}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>📋 内容审核系统</h1>
+    <p>基于 AI 的教育内容质量审核工具 · 填入自己的 API Key 即可使用</p>
+  </header>
+
+  <!-- API Key 配置 -->
+  <div class="config-box">
+    <div class="config-title">🔑 选择 AI 服务并填入 API Key</div>
+    <div class="backend-btns">
+      <button class="btn-backend active" id="btnSF" onclick="setBackend('siliconflow')">🆓 硅基流动（免费）</button>
+      <button class="btn-backend" id="btnClaude" onclick="setBackend('claude')">☁️ Claude API</button>
+    </div>
+
+    <!-- 硅基流动 -->
+    <div id="sfConfig">
+      <div class="input-row">
+        <input type="password" id="sfKey" class="apikey-input" placeholder="填入硅基流动 API Key（sk-...）" autocomplete="off">
+        <button class="btn-small" onclick="toggleKey('sfKey',this)">显示</button>
+      </div>
+      <div class="model-row">
+        <div class="model-col">
+          <label>📝 文字审核模型</label>
+          <select id="sfTextModel">
+            <option value="deepseek-ai/DeepSeek-V3">DeepSeek-V3（推荐，快）</option>
+            <option value="Qwen/Qwen2.5-72B-Instruct">Qwen2.5-72B（最强，慢）</option>
+            <option value="Qwen/Qwen2.5-32B-Instruct">Qwen2.5-32B（平衡）</option>
+            <option value="Qwen/Qwen2.5-14B-Instruct">Qwen2.5-14B（较快）</option>
+            <option value="Qwen/Qwen2.5-7B-Instruct">Qwen2.5-7B（最快）</option>
+            <option value="deepseek-ai/DeepSeek-R1">DeepSeek-R1（推理强）</option>
+          </select>
+        </div>
+        <div class="model-col">
+          <label>🖼️ 图片审核模型</label>
+          <select id="sfVisionModel">
+            <option value="Pro/Qwen/Qwen2-VL-7B-Instruct">Qwen2-VL-7B Pro（推荐）</option>
+            <option value="Qwen/Qwen2-VL-72B-Instruct">Qwen2-VL-72B（最强）</option>
+            <option value="OpenGVLab/InternVL2_5-8B">InternVL2.5-8B（快速）</option>
+            <option value="OpenGVLab/InternVL2-26B">InternVL2-26B（高精度）</option>
+            <option value="Qwen/Qwen2-VL-7B-Instruct">Qwen2-VL-7B（最快）</option>
+          </select>
+        </div>
+      </div>
+      <p class="hint">免费注册：<a href="https://siliconflow.cn" target="_blank">siliconflow.cn</a>，注册即送免费额度</p>
+    </div>
+
+    <!-- Claude -->
+    <div id="claudeConfig" style="display:none">
+      <div class="input-row">
+        <input type="password" id="claudeKey" class="apikey-input" placeholder="填入 Anthropic API Key（sk-ant-...）" autocomplete="off">
+        <button class="btn-small" onclick="toggleKey('claudeKey',this)">显示</button>
+      </div>
+      <div style="margin-top:10px">
+        <label style="font-size:12px;color:#666;display:block;margin-bottom:3px">🤖 Claude 模型</label>
+        <select id="claudeModel">
+          <option value="claude-sonnet-4-20250514">Claude Sonnet 4（推荐）</option>
+          <option value="claude-opus-4-20250514">Claude Opus 4（最强）</option>
+          <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
+          <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku（最快）</option>
+        </select>
+      </div>
+      <p class="hint">获取地址：<a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></p>
+    </div>
+  </div>
+
+  <!-- 输入区 -->
+  <div class="input-section">
+    <div style="margin-bottom:12px">
+      <div style="font-weight:600;font-size:14px;margin-bottom:6px">📝 文字输入</div>
+      <div id="textInput" class="rich-editor" contenteditable="true" data-placeholder="在此输入或粘贴需要审核的文字内容（题目、答案、解析等）..."></div>
+    </div>
+    <div>
+      <div style="font-weight:600;font-size:14px;margin-bottom:6px">🖼️ 图片上传</div>
+      <div class="drop-zone" id="dropZone">
+        <div class="drop-icon">📷</div>
+        <p>Ctrl+V 粘贴截图，拖拽图片到此处，或 <label for="fileInput" style="color:#4a90e2;cursor:pointer">点击选择</label></p>
+        <p class="hint" style="margin-top:4px">支持 PNG、JPG、GIF、WebP，最大 10MB</p>
+        <input type="file" id="fileInput" accept="image/*" hidden>
+      </div>
+    </div>
+  </div>
+
+  <!-- 预览 -->
+  <div class="preview-section" id="previewSection" style="display:none">
+    <div class="preview-header">
+      <span style="font-weight:600;font-size:14px">已选图片</span>
+      <button class="btn-danger" id="clearBtn">清除</button>
+    </div>
+    <div class="preview-grid" id="previewGrid"></div>
+  </div>
+
+  <!-- 审核按钮 -->
+  <button class="btn-primary" id="reviewBtn">
+    <span id="btnText">开始审核</span>
+  </button>
+
+  <!-- 结果 -->
+  <div class="result-section" id="resultSection" style="display:none">
+    <div class="result-header">
+      <h2>📋 审核报告</h2>
+      <div>
+        <button class="btn-action" id="downloadBtn">📄 下载报告</button>
+      </div>
+    </div>
+    <div class="verdict-card" id="verdictCard">
+      <div class="verdict-badge" id="verdictBadge"></div>
+      <p class="verdict-summary" id="verdictSummary"></p>
+    </div>
+    <div class="content-layout">
+      <div class="content-panel">
+        <h3>📄 识别内容</h3>
+        <div id="ocrText" class="highlighted-content" style="display:none"></div>
+        <div id="imageArea" style="display:none"><img id="previewImg" class="annotated-image"></div>
+      </div>
+      <div class="issues-panel">
+        <h3>⚠️ 发现的问题</h3>
+        <div id="issuesList"></div>
+      </div>
+    </div>
+    <details>
+      <summary>📊 详细审核数据</summary>
+      <div class="detail-content">
+        <div class="detail-item"><h4>✏️ 错别字检查</h4><div id="typosDetail"></div></div>
+        <div class="detail-item"><h4>✅ 答案正确性</h4><div id="answerDetail"></div></div>
+        <div class="detail-item"><h4>🔍 解析正确性</h4><div id="explanationDetail"></div></div>
+        <div class="detail-item"><h4>🔗 一致性检查</h4><div id="consistencyDetail"></div></div>
+        <div class="detail-item"><h4>🛡️ 内容安全</h4><div id="safetyDetail"></div></div>
+      </div>
+    </details>
+    <details>
+      <summary>🔧 原始数据 (JSON)</summary>
+      <pre class="raw-json" id="rawJson"></pre>
+    </details>
+  </div>
+
+  <!-- 错误 -->
+  <div id="errorSection" style="display:none">
+    <div class="error-card">
+      <h3>❌ 出错了</h3>
+      <p id="errorMsg"></p>
+    </div>
+  </div>
+</div>
+<script>
+const SYSTEM_PROMPT = `你是一位专业的教育内容审核专家，擅长审查试题、答案和解析的质量。
+请严格按照以下JSON格式输出，不要输出任何其他内容：
+
+\`\`\`json
+{
+  "ocr_text": "识别出的完整文字内容",
+  "image_description": "对图片/图表/公式等非文字内容的描述",
+  "review": {
+    "typos": {
+      "found": true,
+      "details": [{"original": "错误文字","correction": "正确文字","location": "位置","type": "错别字"}],
+      "summary": "总结"
+    },
+    "answer_correctness": {"is_correct": true,"details": "分析","correct_answer": "","confidence": "高"},
+    "explanation_correctness": {"is_correct": true,"details": "分析","issues": [],"confidence": "高"},
+    "consistency": {"is_consistent": true,"question_vs_answer": "分析","question_vs_explanation": "分析","answer_vs_explanation": "分析","issues": []},
+    "content_safety": {"is_safe": true,"issues": [],"summary": "安全"}
+  },
+  "overall_verdict": "通过",
+  "overall_summary": "总体意见"
+}
+\`\`\``;
+
+let currentBackend = 'siliconflow';
+let selectedFile = null;
+let selectedFileDataUrl = null;
+let lastResult = null;
+
+function setBackend(b) {
+  currentBackend = b;
+  document.getElementById('btnSF').classList.toggle('active', b === 'siliconflow');
+  document.getElementById('btnClaude').classList.toggle('active', b === 'claude');
+  document.getElementById('sfConfig').style.display = b === 'siliconflow' ? '' : 'none';
+  document.getElementById('claudeConfig').style.display = b === 'claude' ? '' : 'none';
+}
+
+function toggleKey(id, btn) {
+  const el = document.getElementById(id);
+  if (el.type === 'password') { el.type = 'text'; btn.textContent = '隐藏'; }
+  else { el.type = 'password'; btn.textContent = '显示'; }
+}
+
+// 文件处理
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+document.addEventListener('paste', e => {
+  const items = e.clipboardData && e.clipboardData.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      e.preventDefault();
+      handleFile(item.getAsFile());
+      return;
+    }
+  }
+});
+
+dropZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+
+function handleFile(file) {
+  if (!file.type.startsWith('image/')) { showError('只支持图片文件'); return; }
+  if (file.size > 10 * 1024 * 1024) { showError('图片不能超过 10MB'); return; }
+  selectedFile = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    selectedFileDataUrl = e.target.result;
+    document.getElementById('previewSection').style.display = '';
+    document.getElementById('previewGrid').innerHTML = `
+      <div class="preview-item">
+        <img src="${selectedFileDataUrl}" alt="${file.name}">
+        <div class="preview-name">${file.name}</div>
+      </div>`;
+  };
+  reader.readAsDataURL(file);
+}
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  selectedFile = null; selectedFileDataUrl = null;
+  document.getElementById('previewSection').style.display = 'none';
+  document.getElementById('previewGrid').innerHTML = '';
+  fileInput.value = '';
+});
+
+// 审核
+document.getElementById('reviewBtn').addEventListener('click', async () => {
+  const textEl = document.getElementById('textInput');
+  const text = textEl.innerText.trim();
+  if (!selectedFile && !text) { showError('请上传图片或输入文字内容'); return; }
+
+  const btn = document.getElementById('reviewBtn');
+  const btnText = document.getElementById('btnText');
+  btn.disabled = true; btnText.textContent = '审核中...';
+  document.getElementById('resultSection').style.display = 'none';
+  document.getElementById('errorSection').style.display = 'none';
+
+  try {
+    let result;
+    if (currentBackend === 'siliconflow') {
+      result = await reviewWithSiliconflow(text, selectedFileDataUrl);
+    } else {
+      result = await reviewWithClaude(text, selectedFileDataUrl);
+    }
+    lastResult = result;
+    displayResults(result);
+  } catch (err) {
+    showError(err.message);
+  } finally {
+    btn.disabled = false; btnText.textContent = '开始审核';
+  }
+});
+
+async function reviewWithSiliconflow(text, imageDataUrl) {
+  const key = document.getElementById('sfKey').value.trim();
+  if (!key) throw new Error('请填入硅基流动 API Key');
+
+  const isImage = !!imageDataUrl;
+  const model = isImage
+    ? document.getElementById('sfVisionModel').value
+    : document.getElementById('sfTextModel').value;
+
+  let userContent;
+  if (isImage) {
+    const base64 = imageDataUrl.split(',')[1];
+    const mimeType = imageDataUrl.split(';')[0].split(':')[1];
+    userContent = [
+      { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64}` } },
+      { type: 'text', text: text ? `图片内容如上。另有文字内容：\n${text}\n\n请对以上内容进行全面审核，严格按JSON格式输出。` : '请对这张图片中的内容进行全面审核，严格按JSON格式输出。' }
+    ];
+  } else {
+    userContent = `请对以下文字内容进行全面审核，严格按JSON格式输出：\n\n${text}`;
+  }
+
+  const resp = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: userContent }
+      ],
+      max_tokens: 4096,
+      temperature: 0.1
+    })
+  });
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(`API 错误 ${resp.status}: ${err.message || err.error?.message || '请检查 API Key 是否正确'}`);
+  }
+
+  const data = await resp.json();
+  const content = data.choices?.[0]?.message?.content || '';
+  return parseReviewResult(content);
+}
+
+async function reviewWithClaude(text, imageDataUrl) {
+  const key = document.getElementById('claudeKey').value.trim();
+  if (!key) throw new Error('请填入 Claude API Key');
+  const model = document.getElementById('claudeModel').value;
+
+  let userContent;
+  if (imageDataUrl) {
+    const base64 = imageDataUrl.split(',')[1];
+    const mimeType = imageDataUrl.split(';')[0].split(':')[1];
+    userContent = [
+      { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64 } },
+      { type: 'text', text: text ? `图片内容如上。另有文字：\n${text}\n\n请审核，严格按JSON格式输出。` : '请审核这张图片，严格按JSON格式输出。' }
+    ];
+  } else {
+    userContent = `请审核以下内容，严格按JSON格式输出：\n\n${text}`;
+  }
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 4096,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: userContent }]
+    })
+  });
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(`Claude API 错误 ${resp.status}: ${err.error?.message || '请检查 API Key'}`);
+  }
+
+  const data = await resp.json();
+  const content = data.content?.[0]?.text || '';
+  return parseReviewResult(content);
+}
+
+function parseReviewResult(content) {
+  const match = content.match(/```json\s*([\s\S]*?)```/) || content.match(/(\{[\s\S]*\})/);
+  if (!match) throw new Error('AI 返回格式异常，请重试');
+  try { return JSON.parse(match[1]); }
+  catch { throw new Error('解析 AI 返回结果失败，请重试'); }
+}
+
+function displayResults(data) {
+  document.getElementById('resultSection').style.display = '';
+  document.getElementById('errorSection').style.display = 'none';
+
+  const verdict = data.overall_verdict || '未知';
+  const badge = document.getElementById('verdictBadge');
+  badge.className = 'verdict-badge';
+  if (verdict.includes('通过') && !verdict.includes('不')) {
+    badge.classList.add('verdict-pass'); badge.textContent = '✅ 审核通过';
+  } else if (verdict.includes('修改')) {
+    badge.classList.add('verdict-fix'); badge.textContent = '⚠️ 需要修改';
+  } else {
+    badge.classList.add('verdict-fail'); badge.textContent = '❌ 审核不通过';
+  }
+  document.getElementById('verdictSummary').textContent = data.overall_summary || '';
+
+  // 识别文字
+  const ocrEl = document.getElementById('ocrText');
+  if (data.ocr_text) { ocrEl.style.display = ''; ocrEl.textContent = data.ocr_text; }
+  else ocrEl.style.display = 'none';
+
+  // 图片预览
+  const imgArea = document.getElementById('imageArea');
+  if (selectedFileDataUrl) {
+    imgArea.style.display = ''; document.getElementById('previewImg').src = selectedFileDataUrl;
+  } else imgArea.style.display = 'none';
+
+  // 问题列表
+  const issues = [];
+  const r = data.review || {};
+  if (r.typos?.found && r.typos.details?.length) {
+    r.typos.details.forEach(t => issues.push({ level: 'error', title: `错别字：${t.original} → ${t.correction}`, desc: t.location }));
+  }
+  if (r.answer_correctness?.is_correct === false) {
+    issues.push({ level: 'error', title: '答案有误', desc: r.answer_correctness.details });
+  }
+  if (r.explanation_correctness?.is_correct === false) {
+    issues.push({ level: 'warn', title: '解析有问题', desc: r.explanation_correctness.details });
+  }
+  if (r.consistency?.is_consistent === false) {
+    (r.consistency.issues || []).forEach(i => issues.push({ level: 'warn', title: '一致性问题', desc: i }));
+  }
+  if (!r.content_safety?.is_safe) {
+    (r.content_safety?.issues || []).forEach(i => issues.push({ level: 'error', title: `内容安全：${i.type}`, desc: i.detail }));
+  }
+
+  const listEl = document.getElementById('issuesList');
+  if (issues.length === 0) {
+    listEl.innerHTML = '<div class="issue-item issue-info"><div class="issue-title">✅ 未发现明显问题</div></div>';
+  } else {
+    listEl.innerHTML = issues.map(i => `
+      <div class="issue-item issue-${i.level}">
+        <div class="issue-title">${i.title}</div>
+        ${i.desc ? `<div>${i.desc}</div>` : ''}
+      </div>`).join('');
+  }
+
+  // 详细数据
+  document.getElementById('typosDetail').textContent = r.typos?.summary || (r.typos?.found ? '发现错别字' : '无错别字');
+  document.getElementById('answerDetail').textContent = r.answer_correctness?.details || '无';
+  document.getElementById('explanationDetail').textContent = r.explanation_correctness?.details || '无';
+  document.getElementById('consistencyDetail').textContent = [
+    r.consistency?.question_vs_answer,
+    r.consistency?.answer_vs_explanation
+  ].filter(Boolean).join('\n') || '无';
+  document.getElementById('safetyDetail').textContent = r.content_safety?.summary || '无';
+  document.getElementById('rawJson').textContent = JSON.stringify(data, null, 2);
+}
+
+function showError(msg) {
+  document.getElementById('errorSection').style.display = '';
+  document.getElementById('errorMsg').textContent = msg;
+  document.getElementById('resultSection').style.display = 'none';
+}
+
+// 下载报告
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  if (!lastResult) return;
+  const text = `内容审核报告\n${'='.repeat(40)}\n\n总体判定：${lastResult.overall_verdict}\n\n总体意见：${lastResult.overall_summary}\n\n${JSON.stringify(lastResult, null, 2)}`;
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `审核报告_${new Date().toLocaleDateString('zh-CN')}.txt`; a.click();
+});
+</script>
+</body>
+</html>
