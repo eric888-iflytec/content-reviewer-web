@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>内容审核系统</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f7fa;color:#333;min-height:100vh}
@@ -27,6 +28,8 @@ header p{color:#666;margin-top:6px;font-size:14px}
 select{width:100%;padding:6px 8px;border:1px solid #ddd;border-radius:6px;font-size:13px;background:#fff}
 .hint{font-size:12px;color:#888;margin-top:6px}
 .hint a{color:#4a90e2}
+.proxy-notice{background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:13px;color:#795548;display:none}
+.proxy-notice code{background:#f5f5f5;padding:2px 6px;border-radius:4px;font-family:monospace}
 .input-section{background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
 .rich-editor{min-height:100px;border:1px solid #ddd;border-radius:8px;padding:10px;font-size:14px;outline:none;line-height:1.6}
 .rich-editor:empty:before{content:attr(data-placeholder);color:#aaa;pointer-events:none}
@@ -83,7 +86,6 @@ pre.raw-json{padding:12px;background:#f4f4f4;border-radius:6px;font-size:11px;ov
     <p>基于 AI 的教育内容质量审核工具 · 填入自己的 API Key 即可使用</p>
   </header>
 
-  <!-- API Key 配置 -->
   <div class="config-box">
     <div class="config-title">🔑 选择 AI 服务并填入 API Key</div>
     <div class="backend-btns">
@@ -91,7 +93,6 @@ pre.raw-json{padding:12px;background:#f4f4f4;border-radius:6px;font-size:11px;ov
       <button class="btn-backend" id="btnClaude" onclick="setBackend('claude')">☁️ Claude API</button>
     </div>
 
-    <!-- 硅基流动 -->
     <div id="sfConfig">
       <div class="input-row">
         <input type="password" id="sfKey" class="apikey-input" placeholder="填入硅基流动 API Key（sk-...）" autocomplete="off">
@@ -123,10 +124,9 @@ pre.raw-json{padding:12px;background:#f4f4f4;border-radius:6px;font-size:11px;ov
       <p class="hint">免费注册：<a href="https://siliconflow.cn" target="_blank">siliconflow.cn</a>，注册即送免费额度</p>
     </div>
 
-    <!-- Claude -->
     <div id="claudeConfig" style="display:none">
       <div class="input-row">
-        <input type="password" id="claudeKey" class="apikey-input" placeholder="填入 Anthropic API Key（sk-ant-...）" autocomplete="off">
+        <input type="password" id="claudeKey" class="apikey-input" placeholder="填入 Claude API Key" autocomplete="off">
         <button class="btn-small" onclick="toggleKey('claudeKey',this)">显示</button>
       </div>
       <div style="margin-top:10px">
@@ -138,42 +138,41 @@ pre.raw-json{padding:12px;background:#f4f4f4;border-radius:6px;font-size:11px;ov
           <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku（最快）</option>
         </select>
       </div>
-      <p class="hint">获取地址：<a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></p>
+      <div class="proxy-notice" id="proxyNotice">
+        ⚠️ 使用 Claude API 需要先启动本地代理：<br>
+        在终端运行 <code>python proxy.py</code>（文件在项目目录中）
+      </div>
     </div>
   </div>
 
-  <!-- 输入区 -->
   <div class="input-section">
     <div style="margin-bottom:12px">
       <div style="font-weight:600;font-size:14px;margin-bottom:6px">📝 文字输入</div>
       <div id="textInput" class="rich-editor" contenteditable="true" data-placeholder="在此输入或粘贴需要审核的文字内容（题目、答案、解析等）..."></div>
     </div>
     <div>
-      <div style="font-weight:600;font-size:14px;margin-bottom:6px">🖼️ 图片上传</div>
+      <div style="font-weight:600;font-size:14px;margin-bottom:6px">📎 文件上传</div>
       <div class="drop-zone" id="dropZone">
-        <div class="drop-icon">📷</div>
-        <p>Ctrl+V 粘贴截图，拖拽图片到此处，或 <label for="fileInput" style="color:#4a90e2;cursor:pointer">点击选择</label></p>
-        <p class="hint" style="margin-top:4px">支持 PNG、JPG、GIF、WebP，最大 10MB</p>
-        <input type="file" id="fileInput" accept="image/*" hidden>
+        <div class="drop-icon">📁</div>
+        <p>Ctrl+V 粘贴截图，拖拽文件到此处，或 <label for="fileInput" style="color:#4a90e2;cursor:pointer">点击选择</label></p>
+        <p class="hint" style="margin-top:4px">支持 PNG、JPG、GIF、WebP（最大10MB）和 Word 文档（.docx）</p>
+        <input type="file" id="fileInput" accept="image/*,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden multiple>
       </div>
     </div>
   </div>
 
-  <!-- 预览 -->
   <div class="preview-section" id="previewSection" style="display:none">
     <div class="preview-header">
-      <span style="font-weight:600;font-size:14px">已选图片</span>
+      <span style="font-weight:600;font-size:14px">已选文件</span>
       <button class="btn-danger" id="clearBtn">清除</button>
     </div>
     <div class="preview-grid" id="previewGrid"></div>
   </div>
 
-  <!-- 审核按钮 -->
   <button class="btn-primary" id="reviewBtn">
     <span id="btnText">开始审核</span>
   </button>
 
-  <!-- 结果 -->
   <div class="result-section" id="resultSection" style="display:none">
     <div class="result-header">
       <h2>📋 审核报告</h2>
@@ -212,7 +211,6 @@ pre.raw-json{padding:12px;background:#f4f4f4;border-radius:6px;font-size:11px;ov
     </details>
   </div>
 
-  <!-- 错误 -->
   <div id="errorSection" style="display:none">
     <div class="error-card">
       <h3>❌ 出错了</h3>
@@ -221,6 +219,7 @@ pre.raw-json{padding:12px;background:#f4f4f4;border-radius:6px;font-size:11px;ov
   </div>
 </div>
 <script>
+const PROXY_URL = 'http://localhost:8787';
 const SYSTEM_PROMPT = `你是一位专业的教育内容审核专家，擅长审查试题、答案和解析的质量。
 请严格按照以下JSON格式输出，不要输出任何其他内容：
 
@@ -245,8 +244,7 @@ const SYSTEM_PROMPT = `你是一位专业的教育内容审核专家，擅长审
 \`\`\``;
 
 let currentBackend = 'siliconflow';
-let selectedFile = null;
-let selectedFileDataUrl = null;
+let selectedFiles = []; // [{file, dataUrl, type: 'image'|'docx', text: ''}]
 let lastResult = null;
 
 function setBackend(b) {
@@ -255,6 +253,7 @@ function setBackend(b) {
   document.getElementById('btnClaude').classList.toggle('active', b === 'claude');
   document.getElementById('sfConfig').style.display = b === 'siliconflow' ? '' : 'none';
   document.getElementById('claudeConfig').style.display = b === 'claude' ? '' : 'none';
+  document.getElementById('proxyNotice').style.display = b === 'claude' ? '' : 'none';
 }
 
 function toggleKey(id, btn) {
@@ -263,7 +262,6 @@ function toggleKey(id, btn) {
   else { el.type = 'password'; btn.textContent = '显示'; }
 }
 
-// 文件处理
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
 
@@ -280,43 +278,77 @@ document.addEventListener('paste', e => {
 });
 
 dropZone.addEventListener('click', () => fileInput.click());
-fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+fileInput.addEventListener('change', e => {
+  Array.from(e.target.files).forEach(f => handleFile(f));
+  fileInput.value = '';
+});
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
 dropZone.addEventListener('drop', e => {
   e.preventDefault(); dropZone.classList.remove('drag-over');
-  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  Array.from(e.dataTransfer.files).forEach(f => handleFile(f));
 });
 
 function handleFile(file) {
-  if (!file.type.startsWith('image/')) { showError('只支持图片文件'); return; }
-  if (file.size > 10 * 1024 * 1024) { showError('图片不能超过 10MB'); return; }
-  selectedFile = file;
-  const reader = new FileReader();
-  reader.onload = e => {
-    selectedFileDataUrl = e.target.result;
-    document.getElementById('previewSection').style.display = '';
-    document.getElementById('previewGrid').innerHTML = `
-      <div class="preview-item">
-        <img src="${selectedFileDataUrl}" alt="${file.name}">
-        <div class="preview-name">${file.name}</div>
-      </div>`;
-  };
-  reader.readAsDataURL(file);
+  const isDocx = file.name.endsWith('.docx') || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+  const isImage = file.type.startsWith('image/');
+  if (!isImage && !isDocx) { showError('只支持图片或 .docx 文件'); return; }
+  if (file.size > 20 * 1024 * 1024) { showError('文件不能超过 20MB'); return; }
+
+  if (isDocx) {
+    const reader = new FileReader();
+    reader.onload = async e => {
+      try {
+        const result = await mammoth.extractRawText({ arrayBuffer: e.target.result });
+        const entry = { file, dataUrl: null, type: 'docx', text: result.value, name: file.name };
+        selectedFiles.push(entry);
+        renderPreviews();
+      } catch(err) {
+        showError('读取 docx 失败：' + err.message);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    if (file.size > 10 * 1024 * 1024) { showError('图片不能超过 10MB'); return; }
+    const reader = new FileReader();
+    reader.onload = e => {
+      const entry = { file, dataUrl: e.target.result, type: 'image', text: '', name: file.name };
+      selectedFiles.push(entry);
+      renderPreviews();
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function renderPreviews() {
+  if (selectedFiles.length === 0) {
+    document.getElementById('previewSection').style.display = 'none';
+    return;
+  }
+  document.getElementById('previewSection').style.display = '';
+  document.getElementById('previewGrid').innerHTML = selectedFiles.map((f, i) => `
+    <div class="preview-item">
+      ${f.type === 'image'
+        ? `<img src="${f.dataUrl}" alt="${f.name}">`
+        : `<div class="preview-icon">📄</div>`}
+      <div class="preview-name">${f.name}</div>
+      <button class="btn-danger" style="margin-top:4px;font-size:11px" onclick="removeFile(${i})">删除</button>
+    </div>`).join('');
+}
+
+function removeFile(i) {
+  selectedFiles.splice(i, 1);
+  renderPreviews();
 }
 
 document.getElementById('clearBtn').addEventListener('click', () => {
-  selectedFile = null; selectedFileDataUrl = null;
-  document.getElementById('previewSection').style.display = 'none';
-  document.getElementById('previewGrid').innerHTML = '';
-  fileInput.value = '';
+  selectedFiles = [];
+  renderPreviews();
 });
 
-// 审核
 document.getElementById('reviewBtn').addEventListener('click', async () => {
-  const textEl = document.getElementById('textInput');
-  const text = textEl.innerText.trim();
-  if (!selectedFile && !text) { showError('请上传图片或输入文字内容'); return; }
+  const text = document.getElementById('textInput').innerText.trim();
+  if (selectedFiles.length === 0 && !text) { showError('请上传文件或输入文字内容'); return; }
 
   const btn = document.getElementById('reviewBtn');
   const btnText = document.getElementById('btnText');
@@ -325,17 +357,22 @@ document.getElementById('reviewBtn').addEventListener('click', async () => {
   document.getElementById('errorSection').style.display = 'none';
 
   try {
+    // 合并 docx 文字到输入文字
+    const docxTexts = selectedFiles.filter(f => f.type === 'docx').map(f => f.text).join('\n\n');
+    const fullText = [text, docxTexts].filter(Boolean).join('\n\n');
+    const imageFile = selectedFiles.find(f => f.type === 'image');
+
     let result;
     if (currentBackend === 'siliconflow') {
-      result = await reviewWithSiliconflow(text, selectedFileDataUrl);
+      result = await reviewWithSiliconflow(fullText, imageFile ? imageFile.dataUrl : null);
     } else {
-      result = await reviewWithClaude(text, selectedFileDataUrl);
+      result = await reviewWithClaude(fullText, imageFile ? imageFile.dataUrl : null);
     }
     lastResult = result;
-    displayResults(result);
+    displayResults(result, imageFile ? imageFile.dataUrl : null);
   } catch (err) {
     console.error('审核失败:', err);
-    showError(err.message || '网络请求失败，请检查：1) API Key是否正确 2) 网络连接是否正常 3) 浏览器控制台是否有CORS错误');
+    showError(err.message || '请求失败，请检查 API Key 和网络连接');
   } finally {
     btn.disabled = false; btnText.textContent = '开始审核';
   }
@@ -344,11 +381,8 @@ document.getElementById('reviewBtn').addEventListener('click', async () => {
 async function reviewWithSiliconflow(text, imageDataUrl) {
   const key = document.getElementById('sfKey').value.trim();
   if (!key) throw new Error('请填入硅基流动 API Key');
-
   const isImage = !!imageDataUrl;
-  const model = isImage
-    ? document.getElementById('sfVisionModel').value
-    : document.getElementById('sfTextModel').value;
+  const model = isImage ? document.getElementById('sfVisionModel').value : document.getElementById('sfTextModel').value;
 
   let userContent;
   if (isImage) {
@@ -365,25 +399,14 @@ async function reviewWithSiliconflow(text, imageDataUrl) {
   const resp = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: userContent }
-      ],
-      max_tokens: 4096,
-      temperature: 0.1
-    })
+    body: JSON.stringify({ model, messages: [{ role: 'system', content: SYSTEM_PROMPT }, { role: 'user', content: userContent }], max_tokens: 4096, temperature: 0.1 })
   });
-
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({}));
-    throw new Error(`API 错误 ${resp.status}: ${err.message || err.error?.message || '请检查 API Key 是否正确'}`);
+    throw new Error(`API 错误 ${resp.status}: ${err.message || err.error?.message || '请检查 API Key'}`);
   }
-
   const data = await resp.json();
-  const content = data.choices?.[0]?.message?.content || '';
-  return parseReviewResult(content);
+  return parseReviewResult(data.choices?.[0]?.message?.content || '');
 }
 
 async function reviewWithClaude(text, imageDataUrl) {
@@ -403,32 +426,20 @@ async function reviewWithClaude(text, imageDataUrl) {
     userContent = `请审核以下内容，严格按JSON格式输出：\n\n${text}`;
   }
 
-  const resp = await fetch('https://anthropic-proxy.406635815.workers.dev', {
+  const resp = await fetch(PROXY_URL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': key,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: 4096,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: userContent }]
-    })
+    headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+    body: JSON.stringify({ model, max_tokens: 4096, system: SYSTEM_PROMPT, messages: [{ role: 'user', content: userContent }] })
   }).catch(err => {
-    console.error('Fetch错误:', err);
-    throw new Error('网络请求失败: ' + err.message + '。可能原因：1) 网络连接问题 2) 浏览器CORS限制 3) API服务不可达');
+    throw new Error('无法连接本地代理（localhost:8787）。请先在终端运行：python proxy.py');
   });
 
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({}));
     throw new Error(`Claude API 错误 ${resp.status}: ${err.error?.message || '请检查 API Key'}`);
   }
-
   const data = await resp.json();
-  const content = data.content?.[0]?.text || '';
-  return parseReviewResult(content);
+  return parseReviewResult(data.content?.[0]?.text || '');
 }
 
 function parseReviewResult(content) {
@@ -438,7 +449,7 @@ function parseReviewResult(content) {
   catch { throw new Error('解析 AI 返回结果失败，请重试'); }
 }
 
-function displayResults(data) {
+function displayResults(data, imageDataUrl) {
   document.getElementById('resultSection').style.display = '';
   document.getElementById('errorSection').style.display = 'none';
 
@@ -454,55 +465,36 @@ function displayResults(data) {
   }
   document.getElementById('verdictSummary').textContent = data.overall_summary || '';
 
-  // 识别文字
   const ocrEl = document.getElementById('ocrText');
   if (data.ocr_text) { ocrEl.style.display = ''; ocrEl.textContent = data.ocr_text; }
   else ocrEl.style.display = 'none';
 
-  // 图片预览
   const imgArea = document.getElementById('imageArea');
-  if (selectedFileDataUrl) {
-    imgArea.style.display = ''; document.getElementById('previewImg').src = selectedFileDataUrl;
-  } else imgArea.style.display = 'none';
+  if (imageDataUrl) { imgArea.style.display = ''; document.getElementById('previewImg').src = imageDataUrl; }
+  else imgArea.style.display = 'none';
 
-  // 问题列表
   const issues = [];
   const r = data.review || {};
-  if (r.typos?.found && r.typos.details?.length) {
+  if (r.typos?.found && r.typos.details?.length)
     r.typos.details.forEach(t => issues.push({ level: 'error', title: `错别字：${t.original} → ${t.correction}`, desc: t.location }));
-  }
-  if (r.answer_correctness?.is_correct === false) {
+  if (r.answer_correctness?.is_correct === false)
     issues.push({ level: 'error', title: '答案有误', desc: r.answer_correctness.details });
-  }
-  if (r.explanation_correctness?.is_correct === false) {
+  if (r.explanation_correctness?.is_correct === false)
     issues.push({ level: 'warn', title: '解析有问题', desc: r.explanation_correctness.details });
-  }
-  if (r.consistency?.is_consistent === false) {
+  if (r.consistency?.is_consistent === false)
     (r.consistency.issues || []).forEach(i => issues.push({ level: 'warn', title: '一致性问题', desc: i }));
-  }
-  if (!r.content_safety?.is_safe) {
+  if (!r.content_safety?.is_safe)
     (r.content_safety?.issues || []).forEach(i => issues.push({ level: 'error', title: `内容安全：${i.type}`, desc: i.detail }));
-  }
 
   const listEl = document.getElementById('issuesList');
-  if (issues.length === 0) {
-    listEl.innerHTML = '<div class="issue-item issue-info"><div class="issue-title">✅ 未发现明显问题</div></div>';
-  } else {
-    listEl.innerHTML = issues.map(i => `
-      <div class="issue-item issue-${i.level}">
-        <div class="issue-title">${i.title}</div>
-        ${i.desc ? `<div>${i.desc}</div>` : ''}
-      </div>`).join('');
-  }
+  listEl.innerHTML = issues.length === 0
+    ? '<div class="issue-item issue-info"><div class="issue-title">✅ 未发现明显问题</div></div>'
+    : issues.map(i => `<div class="issue-item issue-${i.level}"><div class="issue-title">${i.title}</div>${i.desc ? `<div>${i.desc}</div>` : ''}</div>`).join('');
 
-  // 详细数据
   document.getElementById('typosDetail').textContent = r.typos?.summary || (r.typos?.found ? '发现错别字' : '无错别字');
   document.getElementById('answerDetail').textContent = r.answer_correctness?.details || '无';
   document.getElementById('explanationDetail').textContent = r.explanation_correctness?.details || '无';
-  document.getElementById('consistencyDetail').textContent = [
-    r.consistency?.question_vs_answer,
-    r.consistency?.answer_vs_explanation
-  ].filter(Boolean).join('\n') || '无';
+  document.getElementById('consistencyDetail').textContent = [r.consistency?.question_vs_answer, r.consistency?.answer_vs_explanation].filter(Boolean).join('\n') || '无';
   document.getElementById('safetyDetail').textContent = r.content_safety?.summary || '无';
   document.getElementById('rawJson').textContent = JSON.stringify(data, null, 2);
 }
@@ -513,7 +505,6 @@ function showError(msg) {
   document.getElementById('resultSection').style.display = 'none';
 }
 
-// 下载报告
 document.getElementById('downloadBtn').addEventListener('click', () => {
   if (!lastResult) return;
   const text = `内容审核报告\n${'='.repeat(40)}\n\n总体判定：${lastResult.overall_verdict}\n\n总体意见：${lastResult.overall_summary}\n\n${JSON.stringify(lastResult, null, 2)}`;
