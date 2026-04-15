@@ -403,13 +403,12 @@ async function reviewWithClaude(text, imageDataUrl) {
     userContent = `请审核以下内容，严格按JSON格式输出：\n\n${text}`;
   }
 
-  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+  const resp = await fetch('https://anthropic-proxy.406635815.workers.dev', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'x-api-key': key,
       'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
     },
     body: JSON.stringify({
       model,
